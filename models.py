@@ -1,13 +1,5 @@
-
-from datetime import date
-
-from sqlalchemy import (
-    Date,
-    ForeignKey,
-    Integer,
-    String, true,
-)
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 
 from database import Base
 
@@ -15,101 +7,60 @@ from database import Base
 class Inventory(Base):
     __tablename__ = "inventory"
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True
-    )
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    category = Column(String, nullable=False)
+    quantity = Column(Integer, default=0, nullable=False)
+    unit = Column(String, nullable=False)
+    storage_location = Column(String, nullable=True)
+    low_stock_threshold = Column(Integer, default=10)
+    is_active = Column(Boolean, default=True, nullable=False)
 
-    name: Mapped[str] = mapped_column(
-        String(100), nullable=False
-    )
-
-    category: Mapped[str] = mapped_column(
-        String(50), nullable=False
-    )
-
-    quantity: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-
-    unit: Mapped[str] = mapped_column(
-        String(20), nullable=False
-    )
-
-    storage_location: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
-    )
-
-    low_stock_threshold: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=10
-    )
-
-    donations: Mapped[list["Donation"]] = relationship(
+    donations = relationship(
+        "Donation",
         back_populates="item"
-
-    is_active: Mapped[bool] = mapped_column(
-        default=True,
-        nullable=False
     )
+
+    distributions = relationship(
+        "Distribution",
+        back_populates="item"
     )
 
 
 class Donation(Base):
     __tablename__ = "donations"
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, index=True
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(
+        Integer,
+        ForeignKey("inventory.id"),
+        nullable=False
     )
+    donor = Column(String, nullable=False)
+    quantity_received = Column(Integer, nullable=False)
+    donation_date = Column(Date, nullable=False)
+    expiration_date = Column(Date, nullable=True)
 
-    item_id: Mapped[int] = mapped_column(
-        ForeignKey("inventory.id"), nullable=False
-    )
-
-    donor: Mapped[str] = mapped_column(
-        String(100), nullable=False
-    )
-
-    quantity_received: Mapped[int] = mapped_column(
-        Integer, nullable=False
-    )
-
-    donation_date: Mapped[date] = mapped_column(
-        Date, nullable=False, default=date.today
-    )
-
-    expiration_date: Mapped[date | None] = mapped_column(
-        Date, nullable=True
-    )
-
-    item: Mapped["Inventory"] = relationship(
+    item = relationship(
+        "Inventory",
         back_populates="donations"
     )
 
-    from datetime import date
 
-    from sqlalchemy import Date, ForeignKey, Integer, String
-    from sqlalchemy.orm import Mapped, mapped_column, relationship
+class Distribution(Base):
+    __tablename__ = "distributions"
 
-    class Distribution(Base):
-        __tablename__ = "distributions"
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(
+        Integer,
+        ForeignKey("inventory.id"),
+        nullable=False
+    )
+    quantity_distributed = Column(Integer, nullable=False)
+    distribution_date = Column(Date, nullable=False)
+    notes = Column(String, nullable=True)
 
-        id: Mapped[int] = mapped_column(
-            Integer, primary_key=True, index=True
-        )
-
-        item_id: Mapped[int] = mapped_column(
-            ForeignKey("inventory.id"), nullable=False
-        )
-
-        quantity_distributed: Mapped[int] = mapped_column(
-            Integer, nullable=False
-        )
-
-        distribution_date: Mapped[date] = mapped_column(
-            Date, nullable=False, default=date.today
-        )
-
-        notes: Mapped[str | None] = mapped_column(
-            String(250), nullable=True
-        )
-
-        item: Mapped["Inventory"] = relationship()
+    item = relationship(
+        "Inventory",
+        back_populates="distributions"
+    )
